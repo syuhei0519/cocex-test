@@ -53,6 +53,13 @@ export default function LoginPage() {
           </Link>
           <h1 className="mt-4 text-2xl font-semibold text-zinc-900">ログイン</h1>
           <p className="mt-2 text-sm text-zinc-500">登録済みのメールアドレスとパスワードでサインインします。</p>
+          <p className="mt-2 text-xs text-zinc-500">
+            初めてご利用の方は{" "}
+            <Link href={routes.auth.register} className="text-zinc-900 underline">
+              新規登録
+            </Link>
+            を行ってください。
+          </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
