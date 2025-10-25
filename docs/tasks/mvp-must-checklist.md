@@ -63,7 +63,7 @@
 ## 3. フロントエンド（React / Next.js）
 
 ### 3.1 共通
-- [ ] 環境構築（ESLint/Prettier/Jest/React Testing Library）
+- [x] 環境構築（ESLint/Prettier/Jest/React Testing Library）
 - [x] OpenAPI 仕様からの型・API クライアント生成
 - [x] API クライアント基盤整備（fetch ラッパー + React Query）
 - [ ] ルーティング・状態管理（React Query/SWR 等）基盤構築
