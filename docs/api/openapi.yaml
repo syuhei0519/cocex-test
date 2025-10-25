@@ -61,6 +61,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
+  /auth/email/verify/{id}/{hash}:
+    get:
+      tags:
+        - Auth
+      summary: メールアドレス確認
+      operationId: verifyEmail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: メール確認対象のユーザーID
+          schema:
+            type: integer
+        - name: hash
+          in: path
+          required: true
+          description: 検証用ハッシュ（VerifyEmail 通知で付与される値）
+          schema:
+            type: string
+        - name: expires
+          in: query
+          required: true
+          description: 署名付きURLの有効期限（UNIX タイムスタンプ）
+          schema:
+            type: integer
+        - name: signature
+          in: query
+          required: true
+          description: Laravel が生成する署名文字列
+          schema:
+            type: string
+      responses:
+        '200':
+          description: メール確認完了
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /auth/email/verification-notification:
+    post:
+      tags:
+        - Auth
+      summary: メール確認メールの再送
+      operationId: resendVerificationEmail
+      security:
+        - bearerAuth: []
+      responses:
+        '202':
+          description: 確認メールを再送
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '200':
+          description: 既に確認済みである旨を通知
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /auth/login:
     post:
       tags:
@@ -1024,6 +1089,11 @@ components:
         requiresEmailVerification:
           type: boolean
           default: true
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
     LoginRequest:
       type: object
       required:
