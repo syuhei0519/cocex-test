@@ -1,0 +1,110 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: ./backend
+      args:
+        UID: ${APP_UID:-1000}
+        GID: ${APP_GID:-1000}
+    container_name: budget_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+      - ./backend/vendor:/var/www/html/vendor
+      - ./backend/storage:/var/www/html/storage
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-budget_db}
+      DB_USERNAME: ${DB_USERNAME:-budget_user}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - budget-net
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: budget_web
+    depends_on:
+      app:
+        condition: service_started
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - budget-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: budget_mysql
+    command: --default-authentication-plugin=caching_sha2_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${DB_FORWARD_PORT:-3307}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-budget_db}
+      MYSQL_USER: ${DB_USERNAME:-budget_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+      TZ: ${TZ:-Asia/Tokyo}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - budget-net
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: budget_redis
+    ports:
+      - "${REDIS_FORWARD_PORT:-6380}:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - budget-net
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: budget_frontend
+    restart: unless-stopped
+    working_dir: /usr/src/app
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:${APP_PORT:-8000}/api
+    volumes:
+      - ./frontend:/usr/src/app
+      - ./docs:/usr/src/docs:ro
+      - /usr/src/app/node_modules
+    depends_on:
+      app:
+        condition: service_started
+    networks:
+      - budget-net
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  budget-net:
+    driver: bridge

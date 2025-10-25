@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["storybook__addons", "storybook__react", "storybook__react_vite"]
+  },
+  "include": ["./.storybook/**/*", "./src/**/*"]
+}

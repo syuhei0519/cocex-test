@@ -1,0 +1,1693 @@
+openapi: 3.1.0
+info:
+  title: 家計簿アプリ API
+  version: 0.1.0
+  description: |
+    Laravel ベースの家計簿アプリケーション向け REST API の初期ドラフト。
+    MUST ユースケースをカバーする最小構成であり、今後のマイクロサービス分割を想定した契約を示す。
+servers:
+  - url: https://api.local
+    description: ローカル開発環境
+  - url: https://api.staging.example.com
+    description: ステージング環境（想定）
+tags:
+  - name: Auth
+    description: 認証・登録関連
+  - name: Users
+    description: プロファイルとユーザー設定
+  - name: Accounts
+    description: 口座管理
+  - name: Transactions
+    description: 取引管理
+  - name: Categories
+    description: カテゴリ管理
+  - name: PaymentMethods
+    description: 支払い方法管理
+  - name: Budgets
+    description: 予算管理
+  - name: Reports
+    description: レポート・ダッシュボード
+  - name: Notifications
+    description: 通知履歴とステータス
+  - name: Integrations
+    description: 外部連携プレースホルダ
+  - name: Exports
+    description: データエクスポート
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: ユーザー登録
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: 仮登録完了（メール確認が必要）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationPendingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: 既に登録済みのメールアドレス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: ログイン
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: ログイン成功
+          headers:
+            Set-Cookie:
+              description: Sanctum セッション Cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: ログアウト
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: ログアウト成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: 現在のユーザー情報取得
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/password/forgot:
+    post:
+      tags:
+        - Auth
+      summary: パスワードリセットメール送信
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordForgotRequest'
+      responses:
+        '202':
+          description: リセットメール送信（既存ユーザーの場合）
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /auth/password/reset:
+    post:
+      tags:
+        - Auth
+      summary: パスワードリセット
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '204':
+          description: パスワードリセット成功
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '410':
+          description: トークン期限切れ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /users/me:
+    patch:
+      tags:
+        - Users
+      summary: プロファイル更新
+      operationId: updateProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateRequest'
+      responses:
+        '200':
+          description: 更新後のユーザープロファイル
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /accounts:
+    get:
+      tags:
+        - Accounts
+      summary: 口座一覧
+      operationId: listAccounts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 口座の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+    post:
+      tags:
+        - Accounts
+      summary: 口座作成
+      operationId: createAccount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreateRequest'
+      responses:
+        '201':
+          description: 新規口座
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /accounts/{accountId}:
+    parameters:
+      - $ref: '#/components/parameters/AccountId'
+    get:
+      tags:
+        - Accounts
+      summary: 口座詳細
+      operationId: getAccount
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 口座情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Accounts
+      summary: 口座更新
+      operationId: updateAccount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdateRequest'
+      responses:
+        '200':
+          description: 更新後の口座
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Accounts
+      summary: 口座アーカイブ
+      operationId: archiveAccount
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: アーカイブ完了
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /categories:
+    get:
+      tags:
+        - Categories
+      summary: カテゴリ一覧
+      operationId: listCategories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: カテゴリの一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+    post:
+      tags:
+        - Categories
+      summary: カテゴリ作成
+      operationId: createCategory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateRequest'
+      responses:
+        '201':
+          description: 新規カテゴリ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /categories/{categoryId}:
+    parameters:
+      - $ref: '#/components/parameters/CategoryId'
+    patch:
+      tags:
+        - Categories
+      summary: カテゴリ更新
+      operationId: updateCategory
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateRequest'
+      responses:
+        '200':
+          description: 更新後のカテゴリ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Categories
+      summary: カテゴリ削除
+      operationId: deleteCategory
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: 削除完了
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /payment-methods:
+    get:
+      tags:
+        - PaymentMethods
+      summary: 支払い方法一覧
+      operationId: listPaymentMethods
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 支払い方法の一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PaymentMethod'
+    post:
+      tags:
+        - PaymentMethods
+      summary: 支払い方法作成
+      operationId: createPaymentMethod
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodCreateRequest'
+      responses:
+        '201':
+          description: 新規支払い方法
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /payment-methods/{paymentMethodId}:
+    parameters:
+      - $ref: '#/components/parameters/PaymentMethodId'
+    patch:
+      tags:
+        - PaymentMethods
+      summary: 支払い方法更新
+      operationId: updatePaymentMethod
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodUpdateRequest'
+      responses:
+        '200':
+          description: 更新後の支払い方法
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - PaymentMethods
+      summary: 支払い方法削除
+      operationId: deletePaymentMethod
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: 削除完了
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /transactions:
+    get:
+      tags:
+        - Transactions
+      summary: 取引一覧
+      operationId: listTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/CategoryFilter'
+        - $ref: '#/components/parameters/AccountFilter'
+        - $ref: '#/components/parameters/TransactionTypeFilter'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 取引の一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+    post:
+      tags:
+        - Transactions
+      summary: 取引作成
+      operationId: createTransaction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionCreateRequest'
+      responses:
+        '201':
+          description: 新規取引
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /transactions/{transactionId}:
+    parameters:
+      - $ref: '#/components/parameters/TransactionId'
+    get:
+      tags:
+        - Transactions
+      summary: 取引詳細
+      operationId: getTransaction
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 取引情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+        - Transactions
+      summary: 取引更新
+      operationId: updateTransaction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionUpdateRequest'
+      responses:
+        '200':
+          description: 更新後の取引
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags:
+        - Transactions
+      summary: 取引削除
+      operationId: deleteTransaction
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: 削除完了
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /transactions/export:
+    post:
+      tags:
+        - Exports
+        - Transactions
+      summary: 取引の CSV エクスポートをリクエスト
+      operationId: exportTransactions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionExportRequest'
+      responses:
+        '202':
+          description: エクスポートジョブを受け付けた
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /budgets/{year}/{month}:
+    parameters:
+      - $ref: '#/components/parameters/BudgetYear'
+      - $ref: '#/components/parameters/BudgetMonth'
+    get:
+      tags:
+        - Budgets
+      summary: 指定月の予算取得
+      operationId: getMonthlyBudget
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 予算リスト
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags:
+        - Budgets
+      summary: 指定月の予算一括設定
+      operationId: upsertMonthlyBudget
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetUpsertRequest'
+      responses:
+        '200':
+          description: 更新後の予算
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /budgets/{year}/{month}/copy:
+    parameters:
+      - $ref: '#/components/parameters/BudgetYear'
+      - $ref: '#/components/parameters/BudgetMonth'
+    post:
+      tags:
+        - Budgets
+      summary: 前月の予算をコピー
+      operationId: copyBudgetFromPreviousMonth
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: コピー後の予算
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Budget'
+        '409':
+          description: 前月データが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+  /budgets/{year}/{month}/summary:
+    parameters:
+      - $ref: '#/components/parameters/BudgetYear'
+      - $ref: '#/components/parameters/BudgetMonth'
+    get:
+      tags:
+        - Budgets
+      summary: 予算と実績のサマリー
+      operationId: getBudgetSummary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 予算・実績比較
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetSummary'
+  /reports/dashboard:
+    get:
+      tags:
+        - Reports
+      summary: ダッシュボード指標取得
+      operationId: getDashboard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: month
+          in: query
+          required: true
+          description: 対象月 (YYYY-MM)
+          schema:
+            type: string
+            pattern: '^\\d{4}-\\d{2}$'
+      responses:
+        '200':
+          description: ダッシュボードデータ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /reports/summary:
+    get:
+      tags:
+        - Reports
+      summary: 任意期間の集計
+      operationId: getSummaryReport
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+      responses:
+        '200':
+          description: 期間集計データ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /reports/monthly-export:
+    post:
+      tags:
+        - Reports
+        - Exports
+      summary: 月次サマリー PDF 生成リクエスト
+      operationId: requestMonthlyReportExport
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonthlyReportRequest'
+      responses:
+        '202':
+          description: エクスポートジョブ登録
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: 通知一覧
+      operationId: listNotifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 通知履歴
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+  /notifications/{notificationId}:
+    parameters:
+      - $ref: '#/components/parameters/NotificationId'
+    patch:
+      tags:
+        - Notifications
+      summary: 通知の既読更新
+      operationId: markNotification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationUpdateRequest'
+      responses:
+        '200':
+          description: 更新後の通知
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /integrations/providers:
+    get:
+      tags:
+        - Integrations
+      summary: 連携可能な外部サービス一覧
+      operationId: listIntegrationProviders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: プロバイダ情報
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationProvider'
+  /integrations/settings:
+    get:
+      tags:
+        - Integrations
+      summary: 現在の外部連携設定取得
+      operationId: getIntegrationSettings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 連携設定一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationSettingList'
+  /integrations/webhooks/{provider}:
+    parameters:
+      - name: provider
+        in: path
+        required: true
+        description: Webhook を送信する外部サービス識別子
+        schema:
+          type: string
+    post:
+      tags:
+        - Integrations
+      summary: 外部サービスからの Webhook 受信
+      operationId: receiveWebhook
+      description: |
+        署名検証とキュー投入の枠組みのみを提供する。詳細なペイロードは provider ごとに拡張する。
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '202':
+          description: Webhook を受け付けた
+        '400':
+          $ref: '#/components/responses/BadRequest'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: XSRF-TOKEN
+  parameters:
+    AccountId:
+      name: accountId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 口座 ID
+    TransactionId:
+      name: transactionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 取引 ID
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: カテゴリ ID
+    PaymentMethodId:
+      name: paymentMethodId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 支払い方法 ID
+    NotificationId:
+      name: notificationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 通知 ID
+    DateFrom:
+      name: dateFrom
+      in: query
+      required: false
+      description: 期間開始日 (YYYY-MM-DD)
+      schema:
+        type: string
+        format: date
+    DateTo:
+      name: dateTo
+      in: query
+      required: false
+      description: 期間終了日 (YYYY-MM-DD)
+      schema:
+        type: string
+        format: date
+    CategoryFilter:
+      name: categoryId
+      in: query
+      required: false
+      description: 取引のカテゴリフィルタ
+      schema:
+        type: string
+        format: uuid
+    AccountFilter:
+      name: accountId
+      in: query
+      required: false
+      description: 取引の口座フィルタ
+      schema:
+        type: string
+        format: uuid
+    TransactionTypeFilter:
+      name: transactionType
+      in: query
+      required: false
+      description: 収入/支出の種別
+      schema:
+        type: string
+        enum:
+          - income
+          - expense
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: perPage
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    BudgetYear:
+      name: year
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 2000
+        maximum: 2100
+      description: 対象年
+    BudgetMonth:
+      name: month
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 12
+      description: 対象月
+  responses:
+    BadRequest:
+      description: バリデーションエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    Unauthorized:
+      description: 認証エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    NotFound:
+      description: リソースが存在しない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+  schemas:
+    ProblemDetail:
+      type: object
+      required:
+        - title
+        - status
+      properties:
+        title:
+          type: string
+          description: エラー概要
+        status:
+          type: integer
+          description: HTTP ステータスコード
+        detail:
+          type: string
+        instance:
+          type: string
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/ProblemDetail'
+        - type: object
+          properties:
+            errors:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        name:
+          type: string
+          maxLength: 64
+    RegistrationPendingResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        requiresEmailVerification:
+          type: boolean
+          default: true
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: API トークン（ヘッダー認証用）
+        user:
+          $ref: '#/components/schemas/User'
+    PasswordForgotRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+    PasswordResetRequest:
+      type: object
+      required:
+        - token
+        - email
+        - password
+      properties:
+        token:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        locale:
+          type: string
+          description: 言語コード (ja-JP など)
+        currency:
+          type: string
+          description: ISO 通貨コード (JPY など)
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UserProfileUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 64
+        locale:
+          type: string
+        currency:
+          type: string
+    Account:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - balance
+        - isArchived
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - cash
+            - bank
+            - credit
+            - prepaid
+            - other
+        balance:
+          type: string
+          description: 通貨型は文字列で表現
+        currency:
+          type: string
+        order:
+          type: integer
+        isArchived:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AccountCreateRequest:
+      type: object
+      required:
+        - name
+        - type
+        - currency
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - cash
+            - bank
+            - credit
+            - prepaid
+            - other
+        currency:
+          type: string
+        initialBalance:
+          type: string
+    AccountUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        order:
+          type: integer
+        isArchived:
+          type: boolean
+    Category:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - income
+            - expense
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        color:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CategoryCreateRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - income
+            - expense
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        color:
+          type: string
+    CategoryUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+    PaymentMethod:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PaymentMethodCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+    PaymentMethodUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+    Transaction:
+      type: object
+      required:
+        - id
+        - accountId
+        - type
+        - amount
+        - occurredAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        paymentMethodId:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+          enum:
+            - income
+            - expense
+        amount:
+          type: string
+        currency:
+          type: string
+        memo:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        occurredAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TransactionListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    TransactionCreateRequest:
+      type: object
+      required:
+        - accountId
+        - type
+        - amount
+        - occurredAt
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        paymentMethodId:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+          enum:
+            - income
+            - expense
+        amount:
+          type: string
+        currency:
+          type: string
+        memo:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        occurredAt:
+          type: string
+          format: date-time
+    TransactionUpdateRequest:
+      type: object
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+        paymentMethodId:
+          type: string
+          format: uuid
+          nullable: true
+        type:
+          type: string
+          enum:
+            - income
+            - expense
+        amount:
+          type: string
+        memo:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        occurredAt:
+          type: string
+          format: date-time
+    TransactionExportRequest:
+      type: object
+      required:
+        - dateFrom
+        - dateTo
+      properties:
+        dateFrom:
+          type: string
+          format: date
+        dateTo:
+          type: string
+          format: date
+        accountId:
+          type: string
+          format: uuid
+          nullable: true
+        categoryId:
+          type: string
+          format: uuid
+          nullable: true
+    ExportJob:
+      type: object
+      required:
+        - id
+        - status
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+            - transaction_csv
+            - monthly_report_pdf
+        status:
+          type: string
+          enum:
+            - queued
+            - processing
+            - completed
+            - failed
+        requestedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        downloadUrl:
+          type: string
+          format: uri
+          nullable: true
+    Budget:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        currency:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetCategory'
+    BudgetCategory:
+      type: object
+      required:
+        - categoryId
+        - amount
+      properties:
+        categoryId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        thresholdPercent:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 100
+    BudgetUpsertRequest:
+      type: object
+      required:
+        - currency
+        - categories
+      properties:
+        currency:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetCategory'
+    BudgetSummary:
+      type: object
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        currency:
+          type: string
+        totals:
+          type: object
+          properties:
+            budgeted:
+              type: string
+            actual:
+              type: string
+            difference:
+              type: string
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              categoryId:
+                type: string
+                format: uuid
+              categoryName:
+                type: string
+              budgeted:
+                type: string
+              actual:
+                type: string
+              difference:
+                type: string
+              thresholdPercent:
+                type: integer
+                nullable: true
+    Dashboard:
+      type: object
+      properties:
+        month:
+          type: string
+        incomeTotal:
+          type: string
+        expenseTotal:
+          type: string
+        netAmount:
+          type: string
+        topCategories:
+          type: array
+          items:
+            type: object
+            properties:
+              categoryId:
+                type: string
+                format: uuid
+              categoryName:
+                type: string
+              amount:
+                type: string
+        recentTransactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+    ReportSummary:
+      type: object
+      properties:
+        dateFrom:
+          type: string
+          format: date
+        dateTo:
+          type: string
+          format: date
+        incomeByMonth:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSeriesPoint'
+        expenseByMonth:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSeriesPoint'
+        categoryTotals:
+          type: array
+          items:
+            type: object
+            properties:
+              categoryId:
+                type: string
+                format: uuid
+              categoryName:
+                type: string
+              amount:
+                type: string
+    TimeSeriesPoint:
+      type: object
+      required:
+        - period
+        - amount
+      properties:
+        period:
+          type: string
+          description: YYYY-MM 表記
+        amount:
+          type: string
+    MonthlyReportRequest:
+      type: object
+      required:
+        - month
+      properties:
+        month:
+          type: string
+          pattern: '^\\d{4}-\\d{2}$'
+        includeDetails:
+          type: boolean
+          default: false
+    Notification:
+      type: object
+      required:
+        - id
+        - type
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          description: 通知の種類
+        title:
+          type: string
+        body:
+          type: string
+        status:
+          type: string
+          enum:
+            - unread
+            - read
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    NotificationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    NotificationUpdateRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - read
+    IntegrationProvider:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+    IntegrationSettingList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              providerId:
+                type: string
+              isEnabled:
+                type: boolean
+              lastSyncedAt:
+                type: string
+                format: date-time
+                nullable: true
+              metadata:
+                type: object
+                additionalProperties: true
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        perPage:
+          type: integer
+        currentPage:
+          type: integer
+        lastPage:
+          type: integer
