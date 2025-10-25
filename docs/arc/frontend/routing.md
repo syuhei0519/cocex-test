@@ -5,8 +5,8 @@ Next.js App Router を利用し、認証有無でセグメントを分けてい�
 ```mermaid
 flowchart LR
     Root[(src/app)] --> Public((page.tsx))
-    Root --> AuthSegment(( (auth) ))
-    Root --> ProtectedSegment(( (protected) ))
+    Root --> AuthSegment["(auth)"]
+    Root --> ProtectedSegment["(protected)"]
 
     AuthSegment --> LoginPage[login/page.tsx]
     AuthSegment --> RegisterPage[register/page.tsx]
