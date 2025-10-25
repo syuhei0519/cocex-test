@@ -94,6 +94,49 @@ it('informs when verification email is already confirmed', function (): void {
     ]);
 });
 
+it('verifies user via notification link end-to-end', function (): void {
+    Notification::fake();
+
+    $payload = [
+        'name' => '通知経由ユーザー',
+        'email' => 'notify-flow@example.com',
+        'password' => 'passw0rd!',
+    ];
+
+    $response = $this->postJson('/api/auth/register', $payload);
+
+    $response->assertCreated()->assertJson([
+        'requiresEmailVerification' => true,
+    ]);
+
+    $user = User::query()->firstWhere('email', $payload['email']);
+    expect($user)->not->toBeNull();
+    expect($user?->hasVerifiedEmail())->toBeFalse();
+
+    $verificationUrl = null;
+    Notification::assertSentTo(
+        $user,
+        VerifyEmail::class,
+        function (VerifyEmail $notification) use (&$verificationUrl, $user) {
+            $verificationUrl = $notification->toMail($user)->actionUrl;
+
+            return true;
+        }
+    );
+
+    $verificationResponse = $this->getJson(verificationPath($verificationUrl));
+    $verificationResponse->assertOk()->assertJson([
+        'message' => 'メールアドレスを確認しました。',
+    ]);
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+
+    $revisitResponse = $this->getJson(verificationPath($verificationUrl));
+    $revisitResponse->assertOk()->assertJson([
+        'message' => 'メールアドレスは既に確認済みです。',
+    ]);
+});
+
 function createVerificationUrl(User $user, ?\DateTimeInterface $expiresAt = null, array $additionalParameters = []): string
 {
     return URL::temporarySignedRoute(
