@@ -1,65 +1,58 @@
-import Image from "next/image";
+import { routes } from "@/lib/router/paths";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 text-white">
+      <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-12 px-6 py-24 text-center md:px-16">
+        <div className="space-y-6">
+          <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Household Budget</p>
+          <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
+            収支の見える化を、チームで進める家計管理アプリ
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mx-auto max-w-2xl text-base text-zinc-300 md:text-lg">
+            ダッシュボードで毎月の予算と実績を把握し、カテゴリ別の分析やレポート出力をスムーズに行えます。
+            今日の取引登録から長期的な振り返りまで、ワークフローをつなぐ基盤を提供します。
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+        <div className="flex flex-col items-center gap-4 md:flex-row">
           <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href={routes.auth.login}
+            className="inline-flex min-w-[200px] items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-900 transition-colors hover:bg-zinc-200"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
+            ログインしてはじめる
           </a>
           <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="#features"
+            className="inline-flex min-w-[200px] items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition-colors hover:border-white hover:bg-white/10"
           >
-            Documentation
+            機能概要を見る
           </a>
         </div>
-      </main>
-    </div>
+        <section
+          id="features"
+          className="grid w-full gap-6 rounded-3xl border border-white/10 bg-white/5 p-8 text-left md:grid-cols-3"
+        >
+          {[
+            {
+              title: "リアルタイム集計",
+              description: "React Query によるキャッシュと同期で、API の結果を即座に画面へ反映。",
+            },
+            {
+              title: "柔軟なルーティング",
+              description: "Next.js App Router を活用したセクション別の UI とガード制御。",
+            },
+            {
+              title: "拡張性あるドメイン",
+              description: "予算・取引・レポートの各ページをプラガブルに追加できます。",
+            },
+          ].map((feature) => (
+            <article key={feature.title} className="rounded-2xl bg-white/5 p-6">
+              <h2 className="text-lg font-semibold text-white">{feature.title}</h2>
+              <p className="mt-3 text-sm text-zinc-300">{feature.description}</p>
+            </article>
+          ))}
+        </section>
+      </div>
+    </main>
   );
 }

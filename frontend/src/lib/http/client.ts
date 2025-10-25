@@ -52,6 +52,7 @@ export const createFetchClient = (config?: { baseUrl?: string }): ApiFetcher => 
 
     const requestInit: RequestInit = {
       ...rest,
+      credentials: rest.credentials ?? "include",
       method: String(options.method).toUpperCase(),
       headers: {
         Accept: "application/json",
