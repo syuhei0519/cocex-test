@@ -9,7 +9,7 @@
 - [x] Laravel ESLint/PHPStan/Pest 等の開発支援ツール導入
 - [x] React プロジェクト初期化（Next.js + TypeScript）
 - [x] OpenAPI 仕様連携パイプライン（Lint、生成ツール設定）
-- [ ] 手動テスト実行フロー（Pest / Jest / E2E）の手順書整備
+- [x] 手動テスト実行フロー（Pest / Jest / E2E）の手順書整備（`docs/setup/manual-test-runbook.md`）
 - [ ] CI/CD パイプライン設計案（アプリ完成後に実装）をドキュメント化
 
 ## 2. バックエンド（Laravel API）
