@@ -66,7 +66,7 @@
 - [x] 環境構築（ESLint/Prettier/Jest/React Testing Library）
 - [x] OpenAPI 仕様からの型・API クライアント生成
 - [x] API クライアント基盤整備（fetch ラッパー + React Query）
-- [ ] ルーティング・状態管理（React Query/SWR 等）基盤構築
+- [x] ルーティング・状態管理（React Query/SWR 等）基盤構築
 
 ### 3.2 認証
 - [ ] 登録／ログイン／ログアウト UI フロー実装

@@ -1,6 +1,10 @@
 "use client";
 
-import { QueryClient, type QueryClientConfig, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QueryClient,
+  type QueryClientConfig,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import React, { useEffect, useState } from "react";
 
@@ -9,8 +13,43 @@ type Props = {
   config?: QueryClientConfig;
 };
 
+const defaultConfig: QueryClientConfig = {
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+};
+
+const mergeConfig = (config?: QueryClientConfig): QueryClientConfig => {
+  if (!config) {
+    return defaultConfig;
+  }
+
+  return {
+    ...defaultConfig,
+    ...config,
+    defaultOptions: {
+      queries: {
+        ...defaultConfig.defaultOptions?.queries,
+        ...config.defaultOptions?.queries,
+      },
+      mutations: {
+        ...defaultConfig.defaultOptions?.mutations,
+        ...config.defaultOptions?.mutations,
+      },
+    },
+  };
+};
+
 export const AppQueryProvider = ({ children, config }: Props) => {
-  const [client] = useState(() => new QueryClient(config));
+  const [client] = useState(() => new QueryClient(mergeConfig(config)));
 
   useEffect(() => {
     const initAxe = async () => {
