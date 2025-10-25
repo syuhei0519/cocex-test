@@ -17,16 +17,9 @@ it('verifies an email with a valid signature', function (): void {
     $user = User::factory()->unverified()->create();
     Event::fake([Verified::class]);
 
-    $verificationUrl = URL::temporarySignedRoute(
-        'verification.verify',
-        now()->addMinutes(60),
-        [
-            'id' => $user->id,
-            'hash' => sha1($user->getEmailForVerification()),
-        ]
-    );
+    $verificationUrl = createVerificationUrl($user);
 
-    $response = $this->getJson($verificationUrl);
+    $response = $this->getJson(verificationPath($verificationUrl));
 
     $response->assertOk()->assertJson([
         'message' => 'メールアドレスを確認しました。',
@@ -39,16 +32,9 @@ it('verifies an email with a valid signature', function (): void {
 it('returns message when email is already verified', function (): void {
     $user = User::factory()->create();
 
-    $verificationUrl = URL::temporarySignedRoute(
-        'verification.verify',
-        now()->addMinutes(60),
-        [
-            'id' => $user->id,
-            'hash' => sha1($user->getEmailForVerification()),
-        ]
-    );
+    $verificationUrl = createVerificationUrl($user);
 
-    $response = $this->getJson($verificationUrl);
+    $response = $this->getJson(verificationPath($verificationUrl));
 
     $response->assertOk()->assertJson([
         'message' => 'メールアドレスは既に確認済みです。',
@@ -58,16 +44,9 @@ it('returns message when email is already verified', function (): void {
 it('rejects verification links with invalid signatures', function (): void {
     $user = User::factory()->unverified()->create();
 
-    $invalidUrl = URL::temporarySignedRoute(
-        'verification.verify',
-        now()->subMinutes(1),
-        [
-            'id' => $user->id,
-            'hash' => sha1($user->getEmailForVerification()),
-        ]
-    );
+    $invalidUrl = createVerificationUrl($user, expiresAt: now()->subMinute());
 
-    $response = $this->getJson($invalidUrl);
+    $response = $this->getJson(verificationPath($invalidUrl));
 
     $response->assertStatus(400)->assertJson([
         'title' => 'Bad Request',
@@ -78,16 +57,9 @@ it('rejects verification links with invalid signatures', function (): void {
 it('returns not found when user does not exist', function (): void {
     $user = User::factory()->unverified()->create();
 
-    $verificationUrl = URL::temporarySignedRoute(
-        'verification.verify',
-        now()->addMinutes(60),
-        [
-            'id' => $user->id + 1,
-            'hash' => sha1($user->getEmailForVerification()),
-        ]
-    );
+    $verificationUrl = createVerificationUrl($user, additionalParameters: ['id' => $user->id + 1]);
 
-    $response = $this->getJson($verificationUrl);
+    $response = $this->getJson(verificationPath($verificationUrl));
 
     $response->assertNotFound()->assertJson([
         'title' => 'Not Found',
@@ -121,3 +93,25 @@ it('informs when verification email is already confirmed', function (): void {
         'message' => 'メールアドレスは既に確認済みです。',
     ]);
 });
+
+function createVerificationUrl(User $user, ?\DateTimeInterface $expiresAt = null, array $additionalParameters = []): string
+{
+    return URL::temporarySignedRoute(
+        'verification.verify',
+        $expiresAt ?? now()->addMinutes(60),
+        array_merge([
+            'id' => $user->id,
+            'hash' => sha1($user->getEmailForVerification()),
+        ], $additionalParameters)
+    );
+}
+
+function verificationPath(string $signedUrl): string
+{
+    $parts = parse_url($signedUrl);
+
+    $path = $parts['path'] ?? '';
+    $query = isset($parts['query']) ? '?'.$parts['query'] : '';
+
+    return $path.$query;
+}
