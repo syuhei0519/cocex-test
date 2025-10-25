@@ -6,6 +6,7 @@
 - `backend/` は Laravel 11 API を収めており、ビジネスロジックは `app/`、ルーティングは `routes/`、Blade/Vite 資産は `resources/`、DB マイグレーションとシーディングは `database/`、テストは `backend/tests/{Feature,Unit}` に配置されています。
 - `frontend/` は Next.js 16 クライアントで、アプリルートは `src/app`、共通 UI は `src/components`、ユーティリティは `src/lib`、Playwright シナリオは `tests/e2e` にあります。
 - `docs/` には参照資料（特に API タイピング用の `api/openapi.yaml`）があり、`docker/` には `docker-compose.yml` から読み込まれる Nginx などの設定が入っています。
+- `docs/arc/` にはアーキテクチャ図や補足資料をまとめます。`backend/`・`frontend/`・`integration/` に分け、Mermaid 記法でシーケンスやフローを記述します。
 
 ## ビルド・テスト・開発コマンド
 - `docker-compose up --build` で MySQL・Redis・Laravel・Next.js を含む開発用コンテナ群を起動します。
@@ -31,3 +32,12 @@
 ## セキュリティと設定の注意
 - `.env`、`storage/`、生成された認証情報はコミットせず、環境変数の追加は `.env.example` を更新して共有します。
 - 機密情報はローカルの `.env` / `.env.local` に保存し、Docker 上書き設定は追跡されない個人ファイルで管理してください。
+
+## ドキュメント構成
+- `docs/arc/` はアーキテクチャ図・補足資料をまとめる。`README.md` で運用ルールを管理し、配下は用途ごとに `backend/`・`frontend/`・`integration/`・`infrastructure/` などのサ
+  ブディレクトリに分割する。
+    - `backend/`: 認証やドメイン処理のシーケンス図・フローチャートなど
+    - `frontend/`: UI フロー・状態管理・ルーティング構成
+    - `integration/`: FE⇔BE のコントラクトおよび外部連携の流れ
+    - `infrastructure/`: デプロイ／CI／監視の構成図
+  - 図は原則 Mermaid 記法（`````mermaid` … `````）で記載し、大規模な図や派生情報は各ディレクトリ内の `.md` ファイルへ整理する。
