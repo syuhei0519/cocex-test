@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { twMerge } from "tailwind-merge";
 
 import { useCurrentUser } from "@/components/auth/AuthGuard";
+import { Button } from "@/components/ui/Button";
+import { authKeys, useLogoutMutation } from "@/lib/queries/auth";
 import { routes } from "@/lib/router/paths";
 
 type NavItem = {
@@ -31,6 +34,22 @@ type AppShellProps = {
 export const AppShell = ({ children }: AppShellProps) => {
   const pathname = usePathname();
   const currentUser = useCurrentUser();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const logoutMutation = useLogoutMutation();
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    setLogoutError(null);
+
+    try {
+      await logoutMutation.mutateAsync();
+      queryClient.removeQueries({ queryKey: authKeys.all });
+      router.replace(routes.auth.login);
+    } catch {
+      setLogoutError("ログアウトに失敗しました。時間をおいて再度お試しください。");
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-zinc-100">
@@ -61,8 +80,17 @@ export const AppShell = ({ children }: AppShellProps) => {
             );
           })}
         </nav>
-        <div className="px-6 pb-8 text-xs text-zinc-400">
-          {new Date().getFullYear()} © Household Budget
+        <div className="px-6 pb-6">
+          <Button
+            variant="secondary"
+            onClick={handleLogout}
+            disabled={logoutMutation.status === "pending"}
+            className="flex w-full items-center justify-center gap-2"
+          >
+            {logoutMutation.status === "pending" ? "ログアウト中..." : "ログアウト"}
+          </Button>
+          {logoutError ? <p className="mt-2 text-xs text-red-500">{logoutError}</p> : null}
+          <p className="mt-4 text-xs text-zinc-400">{new Date().getFullYear()} © Household Budget</p>
         </div>
       </aside>
       <div className="flex min-h-screen flex-1 flex-col">
@@ -70,7 +98,17 @@ export const AppShell = ({ children }: AppShellProps) => {
           <Link href={routes.app.dashboard} className="text-base font-semibold text-zinc-900">
             Household Budget
           </Link>
-          <span className="text-xs text-zinc-500">{currentUser.name}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-zinc-500">{currentUser.name}</span>
+            <Button
+              variant="secondary"
+              onClick={handleLogout}
+              disabled={logoutMutation.status === "pending"}
+              className="flex items-center gap-1 px-3 py-1 text-xs"
+            >
+              {logoutMutation.status === "pending" ? "..." : "ログアウト"}
+            </Button>
+          </div>
         </header>
         <nav className="border-b border-zinc-200 bg-white px-4 py-2 md:hidden">
           <ul className="flex gap-3 overflow-x-auto text-sm">
@@ -93,6 +131,7 @@ export const AppShell = ({ children }: AppShellProps) => {
               );
             })}
           </ul>
+          {logoutError ? <p className="mt-2 text-xs text-red-500">{logoutError}</p> : null}
         </nav>
         <main className="flex-1">
           <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">{children}</div>
