@@ -14,12 +14,16 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()
-            ->count(10)
-            ->sequence(
-                ['name' => '田中 太郎', 'email' => 'taro@example.com'],
-                ['name' => '山田 花子', 'email' => 'hanako@example.com'],
-            )
-            ->create();
+        User::factory()->create([
+            'name' => '田中 太郎',
+            'email' => 'taro@example.com',
+        ]);
+
+        User::factory()->create([
+            'name' => '山田 花子',
+            'email' => 'hanako@example.com',
+        ]);
+
+        User::factory()->count(8)->create();
     }
 }
