@@ -1,0 +1,14 @@
+/.env
+/.env.*
+!/.env.example
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/.env.ci.local
+frontend/.env.stage.local
+frontend/.env.*.local
+!frontend/.env.local.example
+.DS_Store
+node_modules/
+npm-debug.log*
