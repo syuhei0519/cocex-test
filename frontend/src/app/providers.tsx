@@ -1,12 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-  QueryClient,
-  type QueryClientConfig,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { QueryClient, type QueryClientConfig, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import React, { useEffect, useState } from "react";
 
 type Props = {
   children: React.ReactNode;
@@ -18,10 +14,7 @@ export const AppQueryProvider = ({ children, config }: Props) => {
 
   useEffect(() => {
     const initAxe = async () => {
-      if (
-        process.env.NODE_ENV !== "development" ||
-        typeof window === "undefined"
-      ) {
+      if (process.env.NODE_ENV !== "development" || typeof window === "undefined") {
         return;
       }
 

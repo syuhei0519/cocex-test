@@ -3,7 +3,6 @@
  * Do not make direct changes to the file.
  */
 
-
 export interface paths {
   "/auth/register": {
     /** ユーザー登録 */
@@ -440,15 +439,15 @@ export interface components {
         actual?: string;
         difference?: string;
       };
-      categories?: ({
-          /** Format: uuid */
-          categoryId?: string;
-          categoryName?: string;
-          budgeted?: string;
-          actual?: string;
-          difference?: string;
-          thresholdPercent?: number | null;
-        })[];
+      categories?: {
+        /** Format: uuid */
+        categoryId?: string;
+        categoryName?: string;
+        budgeted?: string;
+        actual?: string;
+        difference?: string;
+        thresholdPercent?: number | null;
+      }[];
     };
     Dashboard: {
       month?: string;
@@ -456,11 +455,11 @@ export interface components {
       expenseTotal?: string;
       netAmount?: string;
       topCategories?: {
-          /** Format: uuid */
-          categoryId?: string;
-          categoryName?: string;
-          amount?: string;
-        }[];
+        /** Format: uuid */
+        categoryId?: string;
+        categoryName?: string;
+        amount?: string;
+      }[];
       recentTransactions?: components["schemas"]["Transaction"][];
     };
     ReportSummary: {
@@ -471,11 +470,11 @@ export interface components {
       incomeByMonth?: components["schemas"]["TimeSeriesPoint"][];
       expenseByMonth?: components["schemas"]["TimeSeriesPoint"][];
       categoryTotals?: {
-          /** Format: uuid */
-          categoryId?: string;
-          categoryName?: string;
-          amount?: string;
-        }[];
+        /** Format: uuid */
+        categoryId?: string;
+        categoryName?: string;
+        amount?: string;
+      }[];
     };
     TimeSeriesPoint: {
       /** @description YYYY-MM 表記 */
@@ -516,15 +515,15 @@ export interface components {
       categories?: string[];
     };
     IntegrationSettingList: {
-      data?: ({
-          providerId?: string;
-          isEnabled?: boolean;
-          /** Format: date-time */
-          lastSyncedAt?: string | null;
-          metadata?: {
-            [key: string]: unknown;
-          };
-        })[];
+      data?: {
+        providerId?: string;
+        isEnabled?: boolean;
+        /** Format: date-time */
+        lastSyncedAt?: string | null;
+        metadata?: {
+          [key: string]: unknown;
+        };
+      }[];
     };
     PaginationMeta: {
       total?: number;
@@ -591,7 +590,6 @@ export type $defs = Record<string, never>;
 export type external = Record<string, never>;
 
 export interface operations {
-
   /** ユーザー登録 */
   registerUser: {
     requestBody: {

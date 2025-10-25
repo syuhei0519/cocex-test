@@ -5,12 +5,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary";
 };
 
-export const Button = ({
-  variant = "primary",
-  className,
-  children,
-  ...rest
-}: Props) => {
+export const Button = ({ variant = "primary", className, children, ...rest }: Props) => {
   const variantClass =
     variant === "primary"
       ? "bg-black text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-black dark:hover:bg-zinc-200"

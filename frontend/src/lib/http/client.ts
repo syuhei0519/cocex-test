@@ -7,13 +7,12 @@ import type {
 } from "@/lib/api/endpoints";
 import type { paths } from "@/lib/api/types";
 
-const defaultBaseUrl =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+const defaultBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
 
-type RequestOptions<
-  TPath extends keyof paths,
-  TMethod extends keyof paths[TPath],
-> = Omit<RequestInit, "method" | "body"> & {
+type RequestOptions<TPath extends keyof paths, TMethod extends keyof paths[TPath]> = Omit<
+  RequestInit,
+  "method" | "body"
+> & {
   method: TMethod;
   headers?: Record<string, string>;
   pathParams?: Partial<ApiPathParams<EndpointOperation<TPath, TMethod>>>;
@@ -39,10 +38,7 @@ export const createFetchClient = (config?: { baseUrl?: string }): ApiFetcher => 
     if (pathParams) {
       Object.entries(pathParams).forEach(([key, value]) => {
         if (value === undefined) return;
-        resolvedPath = resolvedPath.replace(
-          `{${key}}`,
-          encodeURIComponent(String(value)),
-        );
+        resolvedPath = resolvedPath.replace(`{${key}}`, encodeURIComponent(String(value)));
       });
     }
 
@@ -62,10 +58,7 @@ export const createFetchClient = (config?: { baseUrl?: string }): ApiFetcher => 
         "Content-Type": "application/json",
         ...headers,
       },
-      body:
-        body !== undefined && options.method !== "get"
-          ? JSON.stringify(body)
-          : undefined,
+      body: body !== undefined && options.method !== "get" ? JSON.stringify(body) : undefined,
     };
 
     const response = await fetch(url, requestInit);

@@ -1,10 +1,6 @@
 import { useMutation, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 
-import type {
-  ApiRequestBody,
-  ApiResponse,
-  EndpointOperation,
-} from "@/lib/api/endpoints";
+import type { ApiRequestBody, ApiResponse, EndpointOperation } from "@/lib/api/endpoints";
 import { apiClient } from "@/lib/http/client";
 
 type LoginOperation = EndpointOperation<"/auth/login", "post">;

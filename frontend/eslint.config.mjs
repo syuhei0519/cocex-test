@@ -11,6 +11,10 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    files: ["**/*.stories.@(js|jsx|ts|tsx)", "**/*.story.@(js|jsx|ts|tsx)"],
+    ...storybook.configs["flat/recommended"],
+  },
+  {
     files: ["**/*.{js,jsx,ts,tsx}"],
     plugins: {
       "simple-import-sort": simpleImportSort,
@@ -30,6 +34,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "storybook-static/**",
+    "test-results/**",
   ]),
 ]);
 
