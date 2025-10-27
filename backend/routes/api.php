@@ -5,7 +5,9 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\CurrentUserController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\User\UpdateProfileController;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +35,14 @@ Route::prefix('auth')->group(function (): void {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('auth.logout')
         ->middleware('auth:sanctum');
+
+    Route::post('password/forgot', ForgotPasswordController::class)
+        ->name('auth.password.forgot')
+        ->middleware('guest:sanctum');
+
+    Route::post('password/reset', ResetPasswordController::class)
+        ->name('auth.password.reset')
+        ->middleware('guest:sanctum');
 });
 
 Route::patch('users/me', UpdateProfileController::class)
