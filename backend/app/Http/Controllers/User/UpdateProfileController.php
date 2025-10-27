@@ -23,7 +23,10 @@ class UpdateProfileController extends Controller
             ]
         );
 
+<<<<<<< HEAD
         // どの項目も指定されていない場合はリクエスト全体をエラー扱いにする
+=======
+>>>>>>> 23cc63ae258e79a8c303c1718742754089eb6945
         $validator->after(function ($validator) use ($request): void {
             if (! $request->hasAny(['name', 'locale', 'currency'])) {
                 $validator->errors()->add('body', '更新する項目を1つ以上指定してください。');
@@ -48,7 +51,10 @@ class UpdateProfileController extends Controller
         }
 
         if ($request->has('locale')) {
+<<<<<<< HEAD
             // ja-jp / ja_JP といった入力を ja-JP 形式へ正規化する
+=======
+>>>>>>> 23cc63ae258e79a8c303c1718742754089eb6945
             $locale = str_replace('_', '-', $request->string('locale')->trim()->toString());
 
             if (str_contains($locale, '-')) {
@@ -60,7 +66,10 @@ class UpdateProfileController extends Controller
         }
 
         if ($request->has('currency')) {
+<<<<<<< HEAD
             // ISO 通貨コードは大文字3桁へ統一する
+=======
+>>>>>>> 23cc63ae258e79a8c303c1718742754089eb6945
             $updates['currency'] = strtoupper($request->string('currency')->trim()->toString());
         }
 
