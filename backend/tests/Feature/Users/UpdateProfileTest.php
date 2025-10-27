@@ -8,10 +8,7 @@ use Laravel\Sanctum\Sanctum;
 
 uses(RefreshDatabase::class);
 
-<<<<<<< HEAD
 // 正常な入力でプロファイルが更新されることを検証する
-=======
->>>>>>> 23cc63ae258e79a8c303c1718742754089eb6945
 it('updates the authenticated user profile', function (): void {
     $user = User::factory()->create([
         'name' => '旧プロフィール名',
@@ -39,10 +36,7 @@ it('updates the authenticated user profile', function (): void {
         ->and($freshUser?->currency)->toBe('JPY');
 });
 
-<<<<<<< HEAD
 // 未認証のユーザーは更新できないことを検証する
-=======
->>>>>>> 23cc63ae258e79a8c303c1718742754089eb6945
 it('requires authentication to update the profile', function (): void {
     $response = $this->patchJson('/api/users/me', [
         'name' => '未ログイン',
@@ -53,10 +47,7 @@ it('requires authentication to update the profile', function (): void {
     ]);
 });
 
-<<<<<<< HEAD
 // リクエストボディが空の場合にバリデーションが失敗することを検証する
-=======
->>>>>>> 23cc63ae258e79a8c303c1718742754089eb6945
 it('validates that at least one field is provided', function (): void {
     $user = User::factory()->create();
 
@@ -72,10 +63,7 @@ it('validates that at least one field is provided', function (): void {
     ]);
 });
 
-<<<<<<< HEAD
 // 通貨コードが3文字でない場合にバリデーションエラーとなることを検証する
-=======
->>>>>>> 23cc63ae258e79a8c303c1718742754089eb6945
 it('validates the currency format', function (): void {
     $user = User::factory()->create();
 
@@ -92,7 +80,3 @@ it('validates the currency format', function (): void {
         'errors' => ['currency'],
     ]);
 });
-<<<<<<< HEAD
-=======
-
->>>>>>> 23cc63ae258e79a8c303c1718742754089eb6945
