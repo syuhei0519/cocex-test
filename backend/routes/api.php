@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\CurrentUserController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\User\UpdateProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function (): void {
@@ -33,3 +34,7 @@ Route::prefix('auth')->group(function (): void {
         ->name('auth.logout')
         ->middleware('auth:sanctum');
 });
+
+Route::patch('users/me', UpdateProfileController::class)
+    ->name('users.me.update')
+    ->middleware('auth:sanctum');
